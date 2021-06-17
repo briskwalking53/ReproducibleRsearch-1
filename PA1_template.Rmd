@@ -1,0 +1,148 @@
+---
+title: "Reproducible Research: Peer Assessment 1"
+output: 
+  html_document:
+    keep_md: true
+---
+
+```{r echo=TRUE}
+
+library(dplyr)
+
+library(ggplot2)
+
+```
+
+## Loading and preprocessing the data
+
+1. Load the data (i.e. read.csv()）
+
+```{r, echo=TRUE}
+
+health <- read.csv(unzip("activity.zip"))
+
+```
+
+2. Process/transform the data (if necessary) into a format suitable for your analysis
+
+```{r, echo=TRUE}
+
+health$date <- as.Date(health$date)
+
+```
+
+## What is mean total number of steps taken per day?
+
+2. Histogram of the total number of steps taken each day
+
+```{r, echo=TRUE}
+
+health1 <- health %>% group_by(date) %>% summarise(total_steps=sum(steps))
+
+hist(health1$total_steps, breaks = seq(0,25000,2500),
+        main="Histgram of the Total number of steps taken each day",
+        xlab="Total number of steps taken each day")
+        
+```
+
+3. Mean and median number of steps taken each day
+
+```{r, echo=TRUE}
+
+mean(health1$total_steps, na.rm=TRUE)
+
+median(health1$total_steps, na.rm=TRUE)
+
+```
+
+## What is the average daily activity pattern?
+
+4. Time series plot of the average number of steps taken
+
+```{r, echo=TRUE}
+
+health2 <- health %>% 
+  filter(!is.na(steps)) %>% 
+  group_by(interval) %>% 
+  summarise(mean_steps=mean(steps))
+
+plot(health2$interval, health2$mean_steps, type = "l",
+        main="Time series plot of the average number of steps taken",
+        xlab="Interval",
+        ylab="Average of steps")
+        
+```
+
+5. The 5-minute interval that, on average, contains the maximum number of steps
+
+```{r, echo=TRUE}
+
+max_steps <- max(health2$mean_steps)
+health2[health2$mean_steps == max_steps,]
+
+```
+
+## Imputing missing values
+
+6. Calculate and report the total number of missing values in the dataset
+
+```{r, echo=TRUE}
+
+health3 <- health %>% filter(is.na(health$steps)) %>% summarise(missing_value=n())
+
+health3
+
+```
+
+6A.Devise a strategy for filling in all of the missing values in the dataset
+
+Fill NA values using the mean of steps for each interval in that day
+
+
+7. Histogram of the total number of steps taken each day after missing values are imputed
+
+```{r, echo=TRUE}
+
+health4 <- health %>% 
+  filter(!is.na(steps)) %>% 
+  group_by(interval) %>% 
+  summarise(mean_steps=mean(steps))
+
+noNAhealth4 <- merge(health4, health)
+NAhealth <- is.na(noNAhealth4$steps)
+noNAhealth4$steps[NAhealth] <- noNAhealth4$mean_steps[NAhealth]
+
+health5 <- noNAhealth4 %>%
+  group_by(date) %>%
+  summarize(total_steps=sum(steps))
+
+hist(health5$total_steps, breaks = seq(0,25000,2500),
+        main="Histgram of the Total number of steps taken each day",
+        xlab="Total number of steps taken each day")
+```
+
+## Are there differences in activity patterns between weekdays and weekends?
+
+8. Panel plot comparing the average number of steps taken per 5-minute interval across weekdays and weekends
+
+```{r, echo=TRUE}
+
+health6 <- health
+health6$weekday <- weekdays(health6$date)
+health6$daytype <- ifelse(health6$weekday=="土曜日" | health6$weekday=="日曜日", "weekend","weekday")
+
+head(health6)
+
+health7 <- health6 %>% 
+  filter(!is.na(health6$steps)) %>% 
+  group_by(interval, daytype) %>% 
+  summarise(mean_steps=mean(steps))
+
+g <- ggplot(data=health7, aes(x=interval, y=mean_steps)) + geom_line()+facet_grid(daytype~.)
+g
+
+```
+
+9. All of the R code needed to reproduce the results (numbers, plots, etc.) in the report
+
+
