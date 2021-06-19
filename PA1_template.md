@@ -37,6 +37,7 @@ library(ggplot2)
 
 
 ```r
+# read csv file
 health <- read.csv(unzip("activity.zip"))
 ```
 
@@ -44,6 +45,7 @@ health <- read.csv(unzip("activity.zip"))
 
 
 ```r
+# transform date 
 health$date <- as.Date(health$date)
 ```
 
@@ -219,7 +221,12 @@ health7 <- health6 %>%
 ```
 
 ```r
-g <- ggplot(data=health7, aes(x=interval, y=mean_steps)) + geom_line()+facet_grid(daytype~.)
+g <- ggplot(data=health7, aes(x=interval, y=mean_steps)) + 
+  geom_line()+
+  facet_grid(daytype~.) +
+  ggtitle("Average number of steps taken per 5-minute interval") +
+  xlab("Interval") +
+  ylab("Average of steps") 
 g
 ```
 
